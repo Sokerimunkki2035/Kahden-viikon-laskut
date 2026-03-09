@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laskujen Seuranta - Maaliskuu</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; line-height: 1.6; background-color: #f0f2f5; color: #1c1e21; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h1 { color: #1a73e8; font-size: 1.4rem; margin-top: 0; }
+        .input-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        .btn-container { display: flex; gap: 10px; margin-top: 15px; }
+        button { flex: 1; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.95rem; transition: opacity 0.2s; }
+        .add-btn { background: #1a73e8; color: white; }
+        .export-btn { background: #34a853; color: white; }
+        button:active { opacity: 0.7; }
+        .summary { background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #1a73e8; }
+        .summary p { margin: 8px 0; display: flex; justify-content: space-between; }
+        .sum-val { font-weight: 800; color: #d93025; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+        th { text-align: left; border-bottom: 2px solid #eee; padding: 10px; color: #5f6368; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        .delete-btn { color: #ea4335; font-size: 1.2rem; text-decoration: none; border: none; background: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Menojen hallinta</h1>
+    
+    <div class="input-group">
+        <label>Laskun lähettäjä</label>
+        <input type="text" id="provider" placeholder="esim. Vuokra">
+    </div>
+    <div class="input-group">
+        <label>Eräpäivä</label>
+        <input type="date" id="dueDate">
+    </div>
+    <div class="input-group">
+        <label>Summa (€)</label>
+        <input type="number" id="amount" step="0.01" placeholder="0.00">
+    </div>
+    
+    <div class="btn-container">
+        <button class="add-btn" onclick="addBill()">Lisää lasku</button>
+        <button class="export-btn" onclick="exportToCSV()">Lataa lista (CSV)</button>
+    </div>
+
+    <div class="summary">
+        <p><span>Seuraavat 2 viikkoa:</span> <span class="sum-val" id="sum2w">0.00</span></p>
+        <p><span>Seuraavat 4 viikkoa:</span> <span class="sum-val" id="sum4w">0.00</span></p>
+        <p><span>Maaliskuun loppuun:</span> <span class="sum-val" id="sumMarch">0.00</span></p>
+    </div>
+
+    <table id="billTable">
+        <thead>
+            <tr>
+                <th>Pvm</th>
+                <th>Kohde</th>
+                <th>€</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="billBody"></tbody>
+    </table>
+</div>
+
+<script>
+    let bills = JSON.parse(localStorage.getItem('bills')) || [];
+
+    function addBill() {
+        const provider = document.getElementById('provider').value;
+        const dueDate = document.getElementById('dueDate').value;
+        const amount = parseFloat(document.getElementById('amount').value);
+
+        if (provider && dueDate && !isNaN(amount)) {
+            bills.push({ provider, dueDate, amount, id: Date.now() });
+            saveAndRender();
+            clearInputs();
+        }
+    }
+
+    function deleteBill(id) {
+        bills = bills.filter(b => b.id !== id);
+        saveAndRender();
+    }
+
+    function saveAndRender() {
+        localStorage.setItem('bills', JSON.stringify(bills));
+        render();
+    }
+
+    function clearInputs() {
+        document.getElementById('provider').value = '';
+        document.getElementById('dueDate').value = '';
+        document.getElementById('amount').value = '';
+    }
+
+    function exportToCSV() {
+        if (bills.length === 0) return alert("Ei tietoja ladattavaksi.");
+        
+        let csvContent = "data:text/csv;charset=utf-8,Päivämäärä;Kohde;Summa\n";
+        bills.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).forEach(b => {
+            csvContent += `${b.dueDate};${b.provider};${b.amount}\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "laskut_maaliskuu.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function render() {
+        const body = document.getElementById('billBody');
+        body.innerHTML = '';
+        
+        const now = new Date();
+        now.setHours(0,0,0,0);
+        
+        const twoWeeks = new Date(now); twoWeeks.setDate(now.getDate() + 14);
+        const fourWeeks = new Date(now); fourWeeks.setDate(now.getDate() + 28);
+        const endOfMarch = new Date(2026, 2, 31); 
+
+        let s2w = 0, s4w = 0, sMarch = 0;
+
+        bills.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+        bills.forEach(bill => {
+            const d = new Date(bill.dueDate);
+            if (d >= now && d <= twoWeeks) s2w += bill.amount;
+            if (d >= now && d <= fourWeeks) s4w += bill.amount;
+            if (d >= now && d <= endOfMarch) sMarch += bill.amount;
+
+            body.innerHTML += `
+                <tr>
+                    <td>${d.toLocaleDateString('fi-FI')}</td>
+                    <td>${bill.provider}</td>
+                    <td>${bill.amount.toFixed(2)} €</td>
+                    <td><button class="delete-btn" onclick="deleteBill(${bill.id})">×</button></td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('sum2w').innerText = s2w.toFixed(2) + " €";
+        document.getElementById('sum4w').innerText = s4w.toFixed(2) + " €";
+        document.getElementById('sumMarch').innerText = sMarch.toFixed(2) + " €";
+    }
+
+    render();
+</script>
+
+</body>
+</html>
