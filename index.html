@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laskujen seuranta - Huhtikuu 2026</title>
+    <title>Laskujen seuranta</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 600px;
+            max-width: 800px;
             margin: 20px auto;
             padding: 10px;
             line-height: 1.6;
@@ -25,13 +25,17 @@
             font-size: 1.2rem;
             margin-top: 0;
         }
-        .input-group {
-            margin-bottom: 10px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
         }
         input {
             width: 100%;
@@ -39,16 +43,6 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             box-sizing: border-box;
-        }
-        button {
-            background-color: #1a73e8;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
         }
         .bill-item {
             display: flex;
@@ -73,10 +67,6 @@
             font-size: 1.2rem;
             margin-right: 10px;
         }
-        .bill-paid-date {
-            font-size: 0.9rem;
-            display: none;
-        }
         .total {
             font-weight: bold;
             color: #d93025;
@@ -84,25 +74,130 @@
             margin-top: 10px;
             font-size: 1.1rem;
         }
+        button {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Lisää lasku</h2>
-    <div class="input-group">
-        <label for="billName">Laskun nimi:</label>
-        <input type="text" id="billName" placeholder="esim. Omavoima">
-    </div>
-    <div class="input-group">
-        <label for="billDate">Eräpäivä:</label>
-        <input type="date" id="billDate">
-    </div>
-    <div class="input-group">
-        <label for="billAmount">Summa (€):</label>
-        <input type="number" id="billAmount" step="0.01" placeholder="esim. 100.00">
-    </div>
-    <button onclick="addBill()">Lisää lasku</button>
+    <h2>Laskujen tiedot</h2>
+    <p>Täytä laskujen päivämäärät ja summat:</p>
+    <table id="billTable">
+        <thead>
+            <tr>
+                <th>Laskun nimi</th>
+                <th>Päivämäärä</th>
+                <th>Summa (€)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Omavoima</td>
+                <td><input type="date" class="bill-date-input" data-name="Omavoima"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="Omavoima"></td>
+            </tr>
+            <tr>
+                <td>Kumeko Recycling</td>
+                <td><input type="date" class="bill-date-input" data-name="Kumeko Recycling"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="Kumeko Recycling"></td>
+            </tr>
+            <tr>
+                <td>Brocc Pankki</td>
+                <td><input type="date" class="bill-date-input" data-name="Brocc Pankki"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="Brocc Pankki"></td>
+            </tr>
+            <tr>
+                <td>Traficom</td>
+                <td><input type="date" class="bill-date-input" data-name="Traficom"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="Traficom"></td>
+            </tr>
+            <tr>
+                <td>LT Rahoitus</td>
+                <td><input type="date" class="bill-date-input" data-name="LT Rahoitus"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="LT Rahoitus"></td>
+            </tr>
+            <tr>
+                <td>LähiTapiola Keskinäinen Vakuutus</td>
+                <td><input type="date" class="bill-date-input" data-name="LähiTapiola Keskinäinen Vakuutus"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="LähiTapiola Keskinäinen Vakuutus"></td>
+            </tr>
+            <tr>
+                <td>HP Instant Ink</td>
+                <td><input type="date" class="bill-date-input" data-name="HP Instant Ink"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="HP Instant Ink"></td>
+            </tr>
+            <tr>
+                <td>Google Ireland</td>
+                <td><input type="date" class="bill-date-input" data-name="Google Ireland"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="Google Ireland"></td>
+            </tr>
+            <tr>
+                <td>OP Vähittäisasiakkaat</td>
+                <td><input type="date" class="bill-date-input" data-name="OP Vähittäisasiakkaat"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="OP Vähittäisasiakkaat"></td>
+            </tr>
+            <tr>
+                <td>Telia</td>
+                <td><input type="date" class="bill-date-input" data-name="Telia"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="Telia"></td>
+            </tr>
+            <tr>
+                <td>LähiTapiola Eläkevakuutus</td>
+                <td><input type="date" class="bill-date-input" data-name="LähiTapiola Eläkevakuutus"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="LähiTapiola Eläkevakuutus"></td>
+            </tr>
+            <tr>
+                <td>Hyvinvointialue</td>
+                <td><input type="date" class="bill-date-input" data-name="Hyvinvointialue"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="Hyvinvointialue"></td>
+            </tr>
+            <tr>
+                <td>Lammaslampi Energia</td>
+                <td><input type="date" class="bill-date-input" data-name="Lammaslampi Energia"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="Lammaslampi Energia"></td>
+            </tr>
+            <tr>
+                <td>ViaPlay</td>
+                <td><input type="date" class="bill-date-input" data-name="ViaPlay"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="ViaPlay"></td>
+            </tr>
+            <tr>
+                <td>Talolaina</td>
+                <td><input type="date" class="bill-date-input" data-name="Talolaina"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="Talolaina"></td>
+            </tr>
+            <tr>
+                <td>Harjavallan kaupunki</td>
+                <td><input type="date" class="bill-date-input" data-name="Harjavallan kaupunki"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="Harjavallan kaupunki"></td>
+            </tr>
+            <tr>
+                <td>Lounea (1/2)</td>
+                <td><input type="date" class="bill-date-input" data-name="Lounea (1/2)"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="Lounea (1/2)"></td>
+            </tr>
+            <tr>
+                <td>Lounea (2/2)</td>
+                <td><input type="date" class="bill-date-input" data-name="Lounea (2/2)"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="Lounea (2/2)"></td>
+            </tr>
+            <tr>
+                <td>Elatusmaksu</td>
+                <td><input type="date" class="bill-date-input" data-name="Elatusmaksu"></td>
+                <td><input type="number" step="0.01" class="bill-amount-input" data-name="Elatusmaksu"></td>
+            </tr>
+        </tbody>
+    </table>
+    <button onclick="updateBills()">Päivitä laskut</button>
 </div>
 
 <div class="card">
@@ -115,6 +210,11 @@
     <h2>2–4 viikkoa eteenpäin</h2>
     <div id="bills4weeks"></div>
     <div class="total" id="total4weeks">Maksamatonta: 0.00 €</div>
+</div>
+
+<div class="card">
+    <h2>Maksetut laskut</h2>
+    <div id="paidBills"></div>
 </div>
 
 <script>
@@ -132,41 +232,43 @@
     const fourWeeksLater = new Date(today);
     fourWeeksLater.setDate(fourWeeksLater.getDate() + 28);
 
-    // Lisää uusi lasku
-    function addBill() {
-        const name = document.getElementById('billName').value;
-        const date = document.getElementById('billDate').value;
-        const amount = parseFloat(document.getElementById('billAmount').value);
+    // Päivitä laskut
+    function updateBills() {
+        bills = [];
+        const dateInputs = document.querySelectorAll('.bill-date-input');
+        const amountInputs = document.querySelectorAll('.bill-amount-input');
 
-        if (name && date && !isNaN(amount)) {
-            bills.push({
-                name: name,
-                dueDate: date,
-                amount: amount,
-                paid: false,
-                flag: true
-            });
+        dateInputs.forEach((input, index) => {
+            const name = input.dataset.name;
+            const date = input.value;
+            const amount = parseFloat(amountInputs[index].value);
 
-            // Tyhjennä lomake
-            document.getElementById('billName').value = '';
-            document.getElementById('billDate').value = '';
-            document.getElementById('billAmount').value = '';
+            if (date && !isNaN(amount)) {
+                bills.push({
+                    name: name,
+                    dueDate: date,
+                    amount: amount,
+                    paid: false,
+                    flag: true
+                });
+            }
+        });
 
-            // Päivitä laskut
-            renderBills();
-        }
+        renderBills();
     }
 
     // Renderöi laskut
     function renderBills() {
         const bills2weeks = document.getElementById('bills2weeks');
         const bills4weeks = document.getElementById('bills4weeks');
+        const paidBills = document.getElementById('paidBills');
 
         let total2weeks = 0;
         let total4weeks = 0;
 
         bills2weeks.innerHTML = '';
         bills4weeks.innerHTML = '';
+        paidBills.innerHTML = '';
 
         bills.forEach(bill => {
             const dueDate = new Date(bill.dueDate);
@@ -180,9 +282,7 @@
             checkbox.checked = bill.paid;
             checkbox.addEventListener('change', () => {
                 bill.paid = checkbox.checked;
-                const paidDateInput = billItem.querySelector('.bill-paid-date');
-                paidDateInput.style.display = checkbox.checked ? 'inline' : 'none';
-                updateTotal();
+                renderBills();
             });
 
             const dateSpan = document.createElement('span');
@@ -201,27 +301,20 @@
             flagSpan.className = 'bill-flag';
             flagSpan.textContent = bill.flag ? '🚩' : '';
 
-            const paidDateInput = document.createElement('input');
-            paidDateInput.type = 'date';
-            paidDateInput.className = 'bill-paid-date';
-            if (bill.paid) {
-                paidDateInput.style.display = 'inline';
-                paidDateInput.valueAsDate = today;
-            }
-
             billItem.appendChild(checkbox);
             billItem.appendChild(dateSpan);
             billItem.appendChild(nameSpan);
             billItem.appendChild(amountSpan);
             billItem.appendChild(flagSpan);
-            billItem.appendChild(paidDateInput);
 
-            if (dueDate <= twoWeeksLater) {
+            if (bill.paid) {
+                paidBills.appendChild(billItem);
+            } else if (dueDate <= twoWeeksLater) {
                 bills2weeks.appendChild(billItem);
-                if (!bill.paid) total2weeks += bill.amount;
+                total2weeks += bill.amount;
             } else if (dueDate <= fourWeeksLater) {
                 bills4weeks.appendChild(billItem);
-                if (!bill.paid) total4weeks += bill.amount;
+                total4weeks += bill.amount;
             }
         });
 
@@ -229,20 +322,12 @@
         document.getElementById('total4weeks').textContent = `Maksamatonta: ${total4weeks.toFixed(2)} €`;
     }
 
-    // Päivitä summat
-    function updateTotal() {
-        renderBills();
-    }
-
     // Muotoile päivämäärä
     function formatDate(dateString) {
         const date = new Date(dateString);
         return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`;
     }
-
-    // Alusta laskut
-    renderBills();
 </script>
 
 </body>
-</html> 
+</html>
