@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laskujen seuranta</title>
+    <title>Laskujen seuranta - Huhtikuu 2026</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -65,26 +65,38 @@
 
 <div class="card">
     <h2>Seuraavat 2 viikkoa</h2>
-    <div id="bills2weeks">
-        <!-- Laskut täytetään JavaScriptillä -->
-    </div>
+    <div id="bills2weeks"></div>
     <div class="total" id="total2weeks">Maksamatonta: 0.00 €</div>
 </div>
 
 <div class="card">
     <h2>2–4 viikkoa eteenpäin</h2>
-    <div id="bills4weeks">
-        <!-- Laskut täytetään JavaScriptillä -->
-    </div>
+    <div id="bills4weeks"></div>
     <div class="total" id="total4weeks">Maksamatonta: 0.00 €</div>
 </div>
 
 <script>
-    // Laskudata
+    // Laskudata huhtikuulle 2026
     const bills = [
-        { name: "Elatusmaksu", dueDate: "31.03.2026", amount: 112.46, paid: false, flag: true },
-        { name: "Brocc", dueDate: "31.03.2026", amount: 276.92, paid: false, flag: true },
-        { name: "Lt rahoitus", dueDate: "07.04.2026", amount: 200.80, paid: false, flag: true }
+        { name: "Omavoima", dueDate: "05.04.2026", amount: 100.00, paid: false, flag: true },
+        { name: "Kumeko Recycling", dueDate: "10.04.2026", amount: 75.00, paid: false, flag: true },
+        { name: "Brocc Pankki", dueDate: "15.04.2026", amount: 276.92, paid: false, flag: true },
+        { name: "Traficom", dueDate: "12.04.2026", amount: 52.77, paid: false, flag: true },
+        { name: "LT Rahoitus", dueDate: "07.04.2026", amount: 200.80, paid: false, flag: true },
+        { name: "LähiTapiola Keskinäinen Vakuutus", dueDate: "08.04.2026", amount: 150.00, paid: false, flag: true },
+        { name: "HP Instant Ink", dueDate: "13.04.2026", amount: 10.20, paid: false, flag: true },
+        { name: "Google Ireland", dueDate: "01.04.2026", amount: 4.99, paid: false, flag: true },
+        { name: "OP Vähittäisasiakkaat", dueDate: "20.04.2026", amount: 80.00, paid: false, flag: true },
+        { name: "Telia", dueDate: "18.04.2026", amount: 30.00, paid: false, flag: true },
+        { name: "LähiTapiola Eläkevakuutus", dueDate: "09.04.2026", amount: 120.00, paid: false, flag: true },
+        { name: "Hyvinvointialue", dueDate: "14.04.2026", amount: 200.00, paid: false, flag: true },
+        { name: "Lammaslampi Energia", dueDate: "22.04.2026", amount: 90.00, paid: false, flag: true },
+        { name: "ViaPlay", dueDate: "25.04.2026", amount: 20.00, paid: false, flag: true },
+        { name: "Talolaina", dueDate: "30.04.2026", amount: 400.00, paid: false, flag: true },
+        { name: "Harjavallan kaupunki", dueDate: "28.04.2026", amount: 150.00, paid: false, flag: true },
+        { name: "Lounea (1/2)", dueDate: "16.04.2026", amount: 50.00, paid: false, flag: true },
+        { name: "Lounea (2/2)", dueDate: "24.04.2026", amount: 60.00, paid: false, flag: true },
+        { name: "Elatusmaksu", dueDate: "03.04.2026", amount: 112.46, paid: false, flag: true }
     ];
 
     // Nykyinen päivä
@@ -99,9 +111,9 @@
     fourWeeksLater.setDate(fourWeeksLater.getDate() + 28);
 
     // Muotoile päivämäärä
-    function formatDate(date) {
-        const d = new Date(date);
-        return `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear()}`;
+    function formatDate(dateString) {
+        const parts = dateString.split('.');
+        return new Date(parts[2], parts[1] - 1, parts[0]);
     }
 
     // Renderöi laskut
@@ -116,8 +128,7 @@
         bills4weeks.innerHTML = '';
 
         bills.forEach(bill => {
-            const dueDateParts = bill.dueDate.split('.');
-            const dueDate = new Date(dueDateParts[2], dueDateParts[1] - 1, dueDateParts[0]);
+            const dueDate = formatDate(bill.dueDate);
 
             const billItem = document.createElement('div');
             billItem.className = 'bill-item';
@@ -154,7 +165,7 @@
             paidDateInput.className = 'bill-paid-date';
             if (bill.paid) {
                 paidDateInput.style.display = 'inline';
-                paidDateInput.value = formatDate(today);
+                paidDateInput.valueAsDate = today;
             }
 
             billItem.appendChild(checkbox);
