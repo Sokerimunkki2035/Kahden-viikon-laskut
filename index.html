@@ -3,72 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Talouden Hallinta 2026</title>
+    <title>Kahden viikon kirjanpito</title>
     <style>
-        :root { --danger: #d93025; --success: #188038; --warning: #f9ab00; --google-blue: #1a73e8; }
+        :root { --danger: #d93025; --success: #188038; --google-blue: #1a73e8; --gray: #5f6368; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; background: #f8f9fa; color: #3c4043; }
         .container { max-width: 800px; margin: 0 auto; }
         .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); margin-bottom: 15px; }
-        h1 { font-size: 1.2rem; color: var(--google-blue); margin-top: 0; }
-        h2 { font-size: 1rem; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 0; }
+        h1 { font-size: 1.2rem; color: var(--google-blue); margin-top: 0; text-align: center; }
+        h2 { font-size: 1rem; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 0; color: var(--gray); }
         
         .input-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; margin-bottom: 10px; }
-        input, button { padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px; }
+        @media (max-width: 500px) { .input-row { grid-template-columns: 1fr; } }
+        
+        input, button { padding: 12px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px; }
         .btn-add { background: var(--google-blue); color: white; border: none; cursor: pointer; font-weight: bold; }
         
-        .budget-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .budget-box { padding: 10px; border-radius: 6px; background: #fff; border: 1px solid #dadce0; }
-        .budget-val { font-size: 1.1rem; font-weight: bold; }
+        .budget-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .budget-item { padding: 10px; background: #fff; border: 1px solid #dadce0; border-radius: 6px; text-align: center; }
+        .budget-val { font-size: 1.1rem; font-weight: bold; display: block; }
 
         table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        td, th { padding: 10px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
+        td { padding: 12px 8px; border-bottom: 1px solid #eee; font-size: 14px; vertical-align: middle; }
         
-        .paid { background-color: #e6f4ea !important; opacity: 0.6; }
-        .problem { background-color: #fce8e6 !important; border-left: 4px solid var(--danger); }
-        .problem-text { color: var(--danger); font-weight: bold; font-size: 12px; }
+        .paid { background-color: #f1f8f3 !important; color: #1e8e3e; text-decoration: line-through; opacity: 0.7; }
+        .problem { border-left: 5px solid var(--danger); background-color: #fce8e6 !important; }
+        .problem-tag { color: var(--danger); font-weight: bold; font-size: 11px; display: block; margin-top: 4px; }
         
-        .action-btns { display: flex; gap: 10px; align-items: center; }
-        .sum-display { font-weight: bold; color: var(--danger); text-align: right; padding: 10px; }
-        
-        .tag { font-size: 10px; padding: 2px 5px; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
-        .tag-soon { background: #feefc3; color: #b05a00; }
+        .sum-row { text-align: right; padding: 15px; font-weight: bold; font-size: 1.1rem; border-top: 1px solid #eee; color: var(--danger); }
+        .btn-icon { background: none; border: 1px solid #ddd; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h1>Laskujen Hallinta & Budjetti</h1>
-        <div class="budget-info">
-            <div class="budget-box">Huhtikuun budjetti: <div class="budget-val">970,00 €</div></div>
-            <div class="budget-box">Toukokuun budjetti: <div class="budget-val">1400,00 €</div></div>
+        <h1>Kahden viikon kirjanpito</h1>
+        
+        <div class="budget-grid">
+            <div class="budget-item"><small>Huhtikuun budjetti</small><span class="budget-val">970,00 €</span></div>
+            <div class="budget-item"><small>Toukokuun budjetti</small><span class="budget-val">1400,00 €</span></div>
         </div>
         
         <div class="input-row">
             <input type="text" id="provider" placeholder="Laskuttaja">
             <input type="date" id="dueDate">
             <input type="number" id="amount" step="0.01" placeholder="Summa €">
-            <button class="btn-add" onclick="addBill()">Lisää</button>
+            <button class="btn-add" onclick="addBill()">LISÄÄ</button>
         </div>
     </div>
 
     <div class="card">
-        <h2>🗓️ Seuraavat 2 viikkoa (Lähitulevaisuus)</h2>
+        <h2>📍 Seuraavat 14 päivää</h2>
         <table id="tableSoon">
             <tbody id="bodySoon"></tbody>
         </table>
-        <div class="sum-display">Yhteensä: <span id="totalSoon">0.00</span> €</div>
+        <div class="sum-row">Maksamatta: <span id="totalSoon">0.00</span> €</div>
     </div>
 
     <div class="card">
-        <h2>📅 Myöhemmät (2-4 viikon päästä)</h2>
+        <h2>📅 Sen jälkeiset 14 päivää</h2>
         <table id="tableLater">
             <tbody id="bodyLater"></tbody>
         </table>
-        <div class="sum-display">Yhteensä: <span id="totalLater">0.00</span> €</div>
+        <div class="sum-row">Maksamatta: <span id="totalLater">0.00</span> €</div>
     </div>
 
-    <p style="font-size: 11px; color: #666; text-align: center;">Vinkki: Ruxaa lasku maksetuksi tai merkitse 'ongelmaksi' jos rahat eivät riitä.</p>
+    <div class="card">
+        <h2>Archives / Kaikki muut tulevat</h2>
+        <table id="tableFuture">
+            <tbody id="bodyFuture"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
@@ -84,9 +89,9 @@
         }
     }
 
-    function toggleStatus(id, field) {
+    function toggle(id, key) {
         const bill = bills.find(b => b.id === id);
-        if (bill) bill[field] = !bill[field];
+        if (bill) bill[key] = !bill[key];
         save();
     }
 
@@ -106,17 +111,18 @@
     }
 
     function render() {
-        const bodySoon = document.getElementById('bodySoon');
-        const bodyLater = document.getElementById('bodyLater');
-        bodySoon.innerHTML = '';
-        bodyLater.innerHTML = '';
+        const bodies = {
+            soon: document.getElementById('bodySoon'),
+            later: document.getElementById('bodyLater'),
+            future: document.getElementById('bodyFuture')
+        };
+        Object.values(bodies).forEach(b => b.innerHTML = '');
 
         const now = new Date(); now.setHours(0,0,0,0);
         const twoWeeks = new Date(now); twoWeeks.setDate(now.getDate() + 14);
         const fourWeeks = new Date(now); fourWeeks.setDate(now.getDate() + 28);
 
-        let sumSoon = 0;
-        let sumLater = 0;
+        let sums = { soon: 0, later: 0 };
 
         bills.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
@@ -126,38 +132,41 @@
             
             const html = `
                 <tr class="${rowClass}">
-                    <td>
-                        <input type="checkbox" ${bill.paid ? 'checked' : ''} onchange="toggleStatus(${bill.id}, 'paid')">
+                    <td style="width: 30px;">
+                        <input type="checkbox" ${bill.paid ? 'checked' : ''} onchange="toggle(${bill.id}, 'paid')">
                     </td>
                     <td>
                         <strong>${bill.provider}</strong><br>
                         <small>${d.toLocaleDateString('fi-FI')}</small>
-                        ${bill.problem ? '<br><span class="problem-text">⚠️ ONGELMA</span>' : ''}
+                        ${bill.problem ? '<span class="problem-tag">🚩 ONGELMA</span>' : ''}
                     </td>
-                    <td style="text-align:right">
-                        <strong>${bill.amount.toFixed(2)} €</strong>
+                    <td style="text-align:right; font-weight:bold;">
+                        ${bill.amount.toFixed(2)} €
                     </td>
-                    <td class="action-btns">
-                        <button onclick="toggleStatus(${bill.id}, 'problem')" title="Merkitse ongelmaksi" style="background:none; border:1px solid #ccc;">🚩</button>
-                        <button onclick="deleteBill(${bill.id})" style="background:none; border:none;">✕</button>
+                    <td style="text-align:right; width: 80px;">
+                        <button class="btn-icon" onclick="toggle(${bill.id}, 'problem')">🚩</button>
+                        <button class="btn-icon" onclick="deleteBill(${bill.id})">✕</button>
                     </td>
                 </tr>
             `;
 
             if (d <= twoWeeks) {
-                bodySoon.innerHTML += html;
-                if (!bill.paid) sumSoon += bill.amount;
+                bodies.soon.innerHTML += html;
+                if (!bill.paid) sums.soon += bill.amount;
             } else if (d <= fourWeeks) {
-                bodyLater.innerHTML += html;
-                if (!bill.paid) sumLater += bill.amount;
+                bodies.later.innerHTML += html;
+                if (!bill.paid) sums.later += bill.amount;
+            } else {
+                bodies.future.innerHTML += html;
             }
         });
 
-        document.getElementById('totalSoon').innerText = sumSoon.toFixed(2);
-        document.getElementById('totalLater').innerText = sumLater.toFixed(2);
+        document.getElementById('totalSoon').innerText = sums.soon.toFixed(2);
+        document.getElementById('totalLater').innerText = sums.later.toFixed(2);
     }
 
     render();
 </script>
 </body>
 </html>
+ 
