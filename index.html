@@ -3,51 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laskut - Kuva-analyysi</title>
+    <title>Laskujen seuranta - Maaliskuu 2026</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 10px auto; padding: 10px; background: #f0f2f5; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .camera-section { border: 2px dashed #ccc; padding: 10px; text-align: center; margin-bottom: 20px; border-radius: 8px; }
-        #camera-input { display: none; }
-        .btn { padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 10px; }
-        .btn-camera { background: #1a73e8; color: white; }
-        .btn-add { background: #34a853; color: white; }
-        #status { font-size: 0.8rem; color: #666; margin: 10px 0; }
-        .manual-input input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
-        .summary { background: #e8f0fe; padding: 15px; border-radius: 8px; margin: 15px 0; font-weight: bold; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 15px; background: #f4f6f8; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1, h2 { color: #1a73e8; margin-top: 0; }
+        .input-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 15px; background: #e8f0fe; border-radius: 8px; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; flex: 1; min-width: 150px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-primary { background: #1a73e8; color: white; }
+        .btn-scan { background: #34a853; color: white; width: 100%; margin-bottom: 10px; }
+        
+        .tables-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .tables-grid { grid-template-columns: 1fr; } }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th { background: #f1f3f4; border: 1px solid #ddd; padding: 10px; text-align: left; }
+        td { border: 1px solid #ddd; padding: 10px; }
+        .paid { background: #e6f4ea; color: #137333; text-decoration: line-through; }
+        
+        .summary-box { font-size: 1.2rem; font-weight: bold; color: #d93025; margin: 15px 0; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>Laskut kuvasta</h1>
-    
-    <div class="camera-section">
-        <p>Ota kuva toisen puhelimen OP-sovelluksesta</p>
-        <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="processImage(event)">
-        <button class="btn btn-camera" onclick="document.getElementById('camera-input').click()">OTA KUVA / VALITSE KUVA</button>
-        <div id="status">Odotetaan kuvaa...</div>
+<div class="container">
+    <div class="card">
+        <h1>Maksusuunnitelma Maaliskuu 2026</h1>
+        <p><i>Käytä kahden puhelimen taktiikkaa tai syötä käsin alta.</i></p>
+        
+        <button class="btn btn-scan" onclick="document.getElementById('camera-input').click()">📷 Lue lasku kameralla</button>
+        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="processImage(event)">
+
+        <div class="input-row">
+            <input type="text" id="provider" placeholder="Laskuttaja (esim. Vuokra)">
+            <input type="date" id="dueDate">
+            <input type="number" id="amount" step="0.01" placeholder="Summa €">
+            <button class="btn btn-primary" onclick="addBill()">Lisää listaan</button>
+        </div>
+        <div id="status" style="font-size: 12px; color: #666;"></div>
     </div>
 
-    <div class="manual-input">
-        <label>Tunnistettu tieto (tarkista aina):</label>
-        <input type="text" id="provider" placeholder="Lähettäjä">
-        <input type="date" id="dueDate">
-        <input type="number" id="amount" step="0.01" placeholder="0.00">
-        <button class="btn btn-add" onclick="addBill()">Lisää listaan</button>
+    <div class="card">
+        <div class="summary-box">Maksamatta maaliskuun loppuun: <span id="totalSum">0.00</span> €</div>
     </div>
 
-    <div class="summary">
-        Maaliskuun loppuun: <span id="sumMarch">0.00</span> €
-    </div>
+    <div class="tables-grid">
+        <div class="card">
+            <h2>📅 Eräpäivän mukaan</h2>
+            <table>
+                <thead>
+                    <tr><th>Pvm</th><th>Kohde</th><th>€</th></tr>
+                </thead>
+                <tbody id="dateBody"></tbody>
+            </table>
+        </div>
 
-    <table id="billTable">
-        <thead><tr><th>Pvm</th><th>Kohde</th><th>€</th></tr></thead>
-        <tbody id="billBody"></tbody>
-    </table>
+        <div class="card">
+            <h2>🔤 Aakkosjärjestyksessä</h2>
+            <table>
+                <thead>
+                    <tr><th>Kohde</th><th>Pvm</th><th>€</th></tr>
+                </thead>
+                <tbody id="alphaBody"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -56,80 +79,69 @@
     async function processImage(event) {
         const file = event.target.files[0];
         if (!file) return;
-
-        const status = document.getElementById('status');
-        status.innerText = "Analysoidaan kuvaa... odota hetki.";
-
+        document.getElementById('status').innerText = "Tunnistetaan...";
         try {
-            // Käytetään suomen ja englannin tunnistusta
-            const result = await Tesseract.recognize(file, 'fin+eng', {
-                logger: m => { if(m.status === 'recognizing text') status.innerText = `Tunnistetaan: ${Math.round(m.progress * 100)}%`; }
-            });
-
+            const result = await Tesseract.recognize(file, 'fin');
             const text = result.data.text;
-            console.log("Tunnistettu teksti:", text);
-            
-            // Yksinkertainen logiikka summan poimimiseen (etsii numeroita joissa pilkku/piste)
             const amountMatch = text.match(/\d+[,.]\d{2}/);
-            if (amountMatch) {
-                document.getElementById('amount').value = amountMatch[0].replace(',', '.');
-            }
-
-            // Etsitään päivämäärää (muotoa pp.kk. tai vvvv-mm-dd)
-            const dateMatch = text.match(/(\d{1,2}\.\d{1,2}\.)/);
-            if (dateMatch) {
-                status.innerText = "Tunnistettu! Tarkista tiedot alta.";
-            } else {
-                status.innerText = "Teksti luettu, mutta päivämääriä oli vaikea poimia automaattisesti.";
-            }
-
-            // Täytetään lähettäjäksi ensimmäinen järkevä sana tekstin alusta (usein yrityksen nimi)
-            const lines = text.split('\n').filter(l => l.trim().length > 3);
-            if (lines.length > 0) {
-                document.getElementById('provider').value = lines[0].trim().substring(0, 20);
-            }
-
-        } catch (error) {
-            console.error(error);
-            status.innerText = "Virhe tunnistuksessa. Yritä uudelleen.";
-        }
+            if (amountMatch) document.getElementById('amount').value = amountMatch[0].replace(',', '.');
+            const lines = text.split('\n').filter(l => l.trim().length > 2);
+            if (lines.length > 0) document.getElementById('provider').value = lines[0].trim();
+            document.getElementById('status').innerText = "Tunnistettu. Tarkista pvm!";
+        } catch (e) { document.getElementById('status').innerText = "Virhe."; }
     }
 
     function addBill() {
         const provider = document.getElementById('provider').value;
         const dueDate = document.getElementById('dueDate').value;
         const amount = parseFloat(document.getElementById('amount').value);
-
         if (provider && dueDate && !isNaN(amount)) {
             bills.push({ provider, dueDate, amount, id: Date.now() });
-            localStorage.setItem('bills', JSON.stringify(bills));
-            render();
-            document.getElementById('provider').value = '';
-            document.getElementById('dueDate').value = '';
-            document.getElementById('amount').value = '';
-            document.getElementById('status').innerText = "Lisätty!";
+            save();
         }
     }
 
+    function deleteBill(id) {
+        bills = bills.filter(b => b.id !== id);
+        save();
+    }
+
+    function save() {
+        localStorage.setItem('bills', JSON.stringify(bills));
+        render();
+        document.getElementById('provider').value = '';
+        document.getElementById('dueDate').value = '';
+        document.getElementById('amount').value = '';
+    }
+
     function render() {
-        const body = document.getElementById('billBody');
-        body.innerHTML = '';
+        const dateBody = document.getElementById('dateBody');
+        const alphaBody = document.getElementById('alphaBody');
+        dateBody.innerHTML = '';
+        alphaBody.innerHTML = '';
+        
+        let total = 0;
         const endOfMarch = new Date(2026, 2, 31);
-        let sMarch = 0;
 
-        bills.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-
-        bills.forEach(bill => {
-            const d = new Date(bill.dueDate);
-            if (d <= endOfMarch) sMarch += bill.amount;
-            body.innerHTML += `<tr><td>${d.toLocaleDateString('fi-FI')}</td><td>${bill.provider}</td><td>${bill.amount.toFixed(2)}</td></tr>`;
+        // Päivämääräjärjestys
+        const dateSorted = [...bills].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        dateSorted.forEach(b => {
+            const d = new Date(b.dueDate);
+            if (d <= endOfMarch) total += b.amount;
+            dateBody.innerHTML += `<tr><td>${d.toLocaleDateString('fi-FI')}</td><td>${b.provider}</td><td>${b.amount.toFixed(2)} € <button onclick="deleteBill(${b.id})" style="border:none;background:none;cursor:pointer">✕</button></td></tr>`;
         });
-        document.getElementById('sumMarch').innerText = sMarch.toFixed(2);
+
+        // Aakkosjärjestys
+        const alphaSorted = [...bills].sort((a, b) => a.provider.localeCompare(b.provider));
+        alphaSorted.forEach(b => {
+            const d = new Date(b.dueDate);
+            alphaBody.innerHTML += `<tr><td>${b.provider}</td><td>${d.toLocaleDateString('fi-FI')}</td><td>${b.amount.toFixed(2)} €</td></tr>`;
+        });
+
+        document.getElementById('totalSum').innerText = total.toFixed(2);
     }
 
     render();
 </script>
-
 </body>
 </html>
- 
