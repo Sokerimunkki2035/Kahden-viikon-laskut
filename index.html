@@ -3,109 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kirjanpito - Kaikki laskut</title>
+    <title>Laskujen seuranta</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 10px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        h1 { color: #1a73e8; text-align: center; font-size: 1.2rem; }
-        
-        .lasku-rivi { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 10px 0; 
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 10px;
+            line-height: 1.6;
+            background-color: #f0f2f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #1a73e8;
+            font-size: 1.2rem;
+            margin-top: 0;
+        }
+        .bill-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
             border-bottom: 1px solid #eee;
         }
-        .lasku-info { flex-grow: 1; }
-        .lasku-nimi { font-weight: bold; font-size: 1.1rem; display: block; }
-        
-        input[type="date"] { border: 1px solid #1a73e8; padding: 5px; border-radius: 4px; margin-top: 5px; }
-        input[type="checkbox"] { transform: scale(1.5); margin-right: 15px; }
-        
-        .summa { font-weight: bold; font-size: 1.1rem; margin: 0 10px; min-width: 80px; text-align: right; }
-        .nappi-poista { background: none; border: 1px solid #ccc; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
-        
-        .total-box { margin-top: 20px; padding: 15px; background: #fff1f0; border: 1px solid #ffa39e; border-radius: 8px; text-align: right; }
-        .total-summa { font-size: 1.4rem; color: #d93025; font-weight: bold; }
+        .bill-checkbox {
+            margin-right: 10px;
+        }
+        .bill-date {
+            margin-right: 10px;
+            font-size: 0.9rem;
+            color: #5f6368;
+        }
+        .bill-amount {
+            margin-right: auto;
+            font-weight: bold;
+        }
+        .bill-flag {
+            color: #ea4335;
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+        .bill-paid-date {
+            font-size: 0.9rem;
+            display: none;
+        }
+        .total {
+            font-weight: bold;
+            color: #d93025;
+            text-align: right;
+            margin-top: 10px;
+            font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Kaikki tallennetut laskut</h1>
-    <p style="font-size: 0.9rem; color: #666;">Päivitä huhtikuun päivämäärät suoraan listaan.</p>
-
-    <div id="lista"></div>
-
-    <div class="total-box">
-        Maksamatta huhtikuussa: <span class="total-summa" id="yhteensa">0.00</span> €
+<div class="card">
+    <h2>Seuraavat 2 viikkoa</h2>
+    <div id="bills2weeks">
+        <!-- Laskut täytetään JavaScriptillä -->
     </div>
+    <div class="total" id="total2weeks">Maksamatonta: 0.00 €</div>
+</div>
+
+<div class="card">
+    <h2>2–4 viikkoa eteenpäin</h2>
+    <div id="bills4weeks">
+        <!-- Laskut täytetään JavaScriptillä -->
+    </div>
+    <div class="total" id="total4weeks">Maksamatonta: 0.00 €</div>
 </div>
 
 <script>
-    let laskut = JSON.parse(localStorage.getItem('bills')) || [];
+    // Laskudata
+    const bills = [
+        { name: "Elatusmaksu", dueDate: "31.03.2026", amount: 112.46, paid: false, flag: true },
+        { name: "Brocc", dueDate: "31.03.2026", amount: 276.92, paid: false, flag: true },
+        { name: "Lt rahoitus", dueDate: "07.04.2026", amount: 200.80, paid: false, flag: true }
+    ];
 
-    function tallennaJaNayta() {
-        localStorage.setItem('bills', JSON.stringify(laskut));
-        paivitaNakyma();
+    // Nykyinen päivä
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 2 ja 4 viikon päivät
+    const twoWeeksLater = new Date(today);
+    twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
+
+    const fourWeeksLater = new Date(today);
+    fourWeeksLater.setDate(fourWeeksLater.getDate() + 28);
+
+    // Muotoile päivämäärä
+    function formatDate(date) {
+        const d = new Date(date);
+        return `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear()}`;
     }
 
-    function muutaPaiva(id, uusiPaiva) {
-        const lasku = laskut.find(l => l.id === id);
-        if (lasku) {
-            lasku.dueDate = uusiPaiva;
-            lasku.paid = false; // Kun muutat päivän huhtikuulle, ruksi poistuu automaattisesti
-            tallennaJaNayta();
-        }
-    }
+    // Renderöi laskut
+    function renderBills() {
+        const bills2weeks = document.getElementById('bills2weeks');
+        const bills4weeks = document.getElementById('bills4weeks');
 
-    function muutaStatus(id) {
-        const lasku = laskut.find(l => l.id === id);
-        if (lasku) {
-            lasku.paid = !lasku.paid;
-            tallennaJaNayta();
-        }
-    }
+        let total2weeks = 0;
+        let total4weeks = 0;
 
-    function poistaLasku(id) {
-        if(confirm("Poistetaanko lasku listalta?")) {
-            laskut = laskut.filter(l => l.id !== id);
-            tallennaJaNayta();
-        }
-    }
+        bills2weeks.innerHTML = '';
+        bills4weeks.innerHTML = '';
 
-    function paivitaNakyma() {
-        const listaElementti = document.getElementById('lista');
-        listaElementti.innerHTML = '';
-        let summa = 0;
+        bills.forEach(bill => {
+            const dueDateParts = bill.dueDate.split('.');
+            const dueDate = new Date(dueDateParts[2], dueDateParts[1] - 1, dueDateParts[0]);
 
-        // Järjestetään päivän mukaan (vanhimmat eli tammikuu ensin)
-        laskut.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+            const billItem = document.createElement('div');
+            billItem.className = 'bill-item';
 
-        laskut.forEach(l => {
-            const rivi = document.createElement('div');
-            rivi.className = 'lasku-rivi';
-            if (l.paid) rivi.style.opacity = '0.5';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'bill-checkbox';
+            checkbox.checked = bill.paid;
+            checkbox.addEventListener('change', () => {
+                bill.paid = checkbox.checked;
+                const paidDateInput = billItem.querySelector('.bill-paid-date');
+                paidDateInput.style.display = checkbox.checked ? 'inline' : 'none';
+                updateTotal();
+            });
 
-            rivi.innerHTML = `
-                <input type="checkbox" ${l.paid ? 'checked' : ''} onclick="muutaStatus(${l.id})">
-                <div class="lasku-info">
-                    <span class="lasku-nimi">${l.provider}</span>
-                    <input type="date" value="${l.dueDate}" onchange="muutaPaiva(${l.id}, this.value)">
-                </div>
-                <div class="summa">${l.amount.toFixed(2)} €</div>
-                <button class="nappi-poista" onclick="poistaLasku(${l.id})">✕</button>
-            `;
-            listaElementti.appendChild(rivi);
+            const dateSpan = document.createElement('span');
+            dateSpan.className = 'bill-date';
+            dateSpan.textContent = bill.dueDate;
 
-            if (!l.paid) summa += l.amount;
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = bill.name;
+            nameSpan.style.flex = '1';
+
+            const amountSpan = document.createElement('span');
+            amountSpan.className = 'bill-amount';
+            amountSpan.textContent = `${bill.amount.toFixed(2)} €`;
+
+            const flagSpan = document.createElement('span');
+            flagSpan.className = 'bill-flag';
+            flagSpan.textContent = bill.flag ? '🚩' : '';
+
+            const paidDateInput = document.createElement('input');
+            paidDateInput.type = 'date';
+            paidDateInput.className = 'bill-paid-date';
+            if (bill.paid) {
+                paidDateInput.style.display = 'inline';
+                paidDateInput.value = formatDate(today);
+            }
+
+            billItem.appendChild(checkbox);
+            billItem.appendChild(dateSpan);
+            billItem.appendChild(nameSpan);
+            billItem.appendChild(amountSpan);
+            billItem.appendChild(flagSpan);
+            billItem.appendChild(paidDateInput);
+
+            if (dueDate <= twoWeeksLater) {
+                bills2weeks.appendChild(billItem);
+                if (!bill.paid) total2weeks += bill.amount;
+            } else if (dueDate <= fourWeeksLater) {
+                bills4weeks.appendChild(billItem);
+                if (!bill.paid) total4weeks += bill.amount;
+            }
         });
 
-        document.getElementById('yhteensa').innerText = summa.toFixed(2);
+        document.getElementById('total2weeks').textContent = `Maksamatonta: ${total2weeks.toFixed(2)} €`;
+        document.getElementById('total4weeks').textContent = `Maksamatonta: ${total4weeks.toFixed(2)} €`;
     }
 
-    paivitaNakyma();
+    // Päivitä summat
+    function updateTotal() {
+        renderBills();
+    }
+
+    // Alusta laskut
+    renderBills();
 </script>
+
 </body>
-</html>
- 
+</html> 
