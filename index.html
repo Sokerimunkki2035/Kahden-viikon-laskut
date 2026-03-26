@@ -27,10 +27,11 @@
         
         .paid { background-color: #f1f8f3 !important; color: #1e8e3e; text-decoration: line-through; opacity: 0.7; }
         .problem { border-left: 5px solid var(--danger); background-color: #fce8e6 !important; }
-        .problem-tag { color: var(--danger); font-weight: bold; font-size: 11px; display: block; margin-top: 4px; }
+        .past { opacity: 0.6; background-color: #f1f3f4; }
         
         .sum-row { text-align: right; padding: 15px; font-weight: bold; font-size: 1.1rem; border-top: 1px solid #eee; color: var(--danger); }
         .btn-icon { background: none; border: 1px solid #ddd; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
+        .btn-update { background: #fff; border: 1px solid var(--google-blue); color: var(--google-blue); font-size: 11px; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -44,7 +45,7 @@
             <div class="budget-item"><small>Toukokuun budjetti</small><span class="budget-val">1400,00 €</span></div>
         </div>
         
-        <div class="input-row">
+        <div class="input-row" id="entryForm">
             <input type="text" id="provider" placeholder="Laskuttaja">
             <input type="date" id="dueDate">
             <input type="number" id="amount" step="0.01" placeholder="Summa €">
@@ -61,17 +62,18 @@
     </div>
 
     <div class="card">
-        <h2>📅 Sen jälkeiset 14 päivää</h2>
+        <h2>📅 Myöhemmät laskut</h2>
         <table id="tableLater">
             <tbody id="bodyLater"></tbody>
         </table>
         <div class="sum-row">Maksamatta: <span id="totalLater">0.00</span> €</div>
     </div>
 
-    <div class="card">
-        <h2>Archives / Kaikki muut tulevat</h2>
-        <table id="tableFuture">
-            <tbody id="bodyFuture"></tbody>
+    <div class="card" style="border-top: 4px solid #5f6368;">
+        <h2>⌛ Menneet / Toistuvat (Pohjat)</h2>
+        <p style="font-size: 11px; color: #666;">Täällä näet vanhat laskut. Klikkaa 'Kopioi huhtikuulle' uusiaksesi ne.</p>
+        <table id="tablePast">
+            <tbody id="bodyPast"></tbody>
         </table>
     </div>
 </div>
@@ -89,6 +91,19 @@
         }
     }
 
+    // TÄMÄ TOIMINTO KOPIOI LASKUN HUHTIKUULLE
+    function reuseBill(id) {
+        const bill = bills.find(b => b.id === id);
+        if (bill) {
+            document.getElementById('provider').value = bill.provider;
+            document.getElementById('amount').value = bill.amount;
+            // Asetetaan oletukseksi huhtikuun 2026 alku
+            document.getElementById('dueDate').value = "2026-04-01";
+            document.getElementById('entryForm').scrollIntoView({behavior: "smooth"});
+            alert("Tiedot täytetty ylös. Valitse tarkka päivä huhtikuulta ja paina LISÄÄ.");
+        }
+    }
+
     function toggle(id, key) {
         const bill = bills.find(b => b.id === id);
         if (bill) bill[key] = !bill[key];
@@ -96,7 +111,7 @@
     }
 
     function deleteBill(id) {
-        if(confirm("Poistetaanko lasku?")) {
+        if(confirm("Poistetaanko lasku historiasta?")) {
             bills = bills.filter(b => b.id !== id);
             save();
         }
@@ -114,13 +129,12 @@
         const bodies = {
             soon: document.getElementById('bodySoon'),
             later: document.getElementById('bodyLater'),
-            future: document.getElementById('bodyFuture')
+            past: document.getElementById('bodyPast')
         };
         Object.values(bodies).forEach(b => b.innerHTML = '');
 
         const now = new Date(); now.setHours(0,0,0,0);
         const twoWeeks = new Date(now); twoWeeks.setDate(now.getDate() + 14);
-        const fourWeeks = new Date(now); fourWeeks.setDate(now.getDate() + 28);
 
         let sums = { soon: 0, later: 0 };
 
@@ -128,36 +142,38 @@
 
         bills.forEach(bill => {
             const d = new Date(bill.dueDate);
-            const rowClass = (bill.paid ? 'paid' : '') + (bill.problem ? ' problem' : '');
+            const isPast = d < now;
+            const rowClass = (bill.paid ? 'paid' : '') + (bill.problem ? ' problem' : '') + (isPast ? ' past' : '');
             
             const html = `
                 <tr class="${rowClass}">
                     <td style="width: 30px;">
-                        <input type="checkbox" ${bill.paid ? 'checked' : ''} onchange="toggle(${bill.id}, 'paid')">
+                        ${!isPast ? `<input type="checkbox" ${bill.paid ? 'checked' : ''} onchange="toggle(${bill.id}, 'paid')">` : '⌛'}
                     </td>
                     <td>
                         <strong>${bill.provider}</strong><br>
                         <small>${d.toLocaleDateString('fi-FI')}</small>
-                        ${bill.problem ? '<span class="problem-tag">🚩 ONGELMA</span>' : ''}
+                        ${bill.problem ? '<span style="color:red; font-size:10px; display:block;">🚩 ONGELMA</span>' : ''}
                     </td>
                     <td style="text-align:right; font-weight:bold;">
                         ${bill.amount.toFixed(2)} €
                     </td>
-                    <td style="text-align:right; width: 80px;">
-                        <button class="btn-icon" onclick="toggle(${bill.id}, 'problem')">🚩</button>
+                    <td style="text-align:right;">
+                        ${isPast ? `<button class="btn-update" onclick="reuseBill(${bill.id})">Kopioi huhtikuulle</button>` : 
+                        `<button class="btn-icon" onclick="toggle(${bill.id}, 'problem')">🚩</button>`}
                         <button class="btn-icon" onclick="deleteBill(${bill.id})">✕</button>
                     </td>
                 </tr>
             `;
 
-            if (d <= twoWeeks) {
+            if (isPast) {
+                bodies.past.innerHTML += html;
+            } else if (d <= twoWeeks) {
                 bodies.soon.innerHTML += html;
                 if (!bill.paid) sums.soon += bill.amount;
-            } else if (d <= fourWeeks) {
+            } else {
                 bodies.later.innerHTML += html;
                 if (!bill.paid) sums.later += bill.amount;
-            } else {
-                bodies.future.innerHTML += html;
             }
         });
 
