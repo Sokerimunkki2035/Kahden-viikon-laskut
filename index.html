@@ -3,107 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laskujen seuranta - Maaliskuu 2026</title>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <title>Talouden Hallinta 2026</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 15px; background: #f4f6f8; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h1, h2 { color: #1a73e8; margin-top: 0; }
-        .input-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 15px; background: #e8f0fe; border-radius: 8px; }
-        input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; flex: 1; min-width: 150px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-primary { background: #1a73e8; color: white; }
-        .btn-scan { background: #34a853; color: white; width: 100%; margin-bottom: 10px; }
+        :root { --danger: #d93025; --success: #188038; --warning: #f9ab00; --google-blue: #1a73e8; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; background: #f8f9fa; color: #3c4043; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); margin-bottom: 15px; }
+        h1 { font-size: 1.2rem; color: var(--google-blue); margin-top: 0; }
+        h2 { font-size: 1rem; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 0; }
         
-        .tables-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .tables-grid { grid-template-columns: 1fr; } }
+        .input-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; margin-bottom: 10px; }
+        input, button { padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px; }
+        .btn-add { background: var(--google-blue); color: white; border: none; cursor: pointer; font-weight: bold; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        th { background: #f1f3f4; border: 1px solid #ddd; padding: 10px; text-align: left; }
-        td { border: 1px solid #ddd; padding: 10px; }
-        .paid { background: #e6f4ea; color: #137333; text-decoration: line-through; }
+        .budget-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .budget-box { padding: 10px; border-radius: 6px; background: #fff; border: 1px solid #dadce0; }
+        .budget-val { font-size: 1.1rem; font-weight: bold; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        td, th { padding: 10px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
         
-        .summary-box { font-size: 1.2rem; font-weight: bold; color: #d93025; margin: 15px 0; }
+        .paid { background-color: #e6f4ea !important; opacity: 0.6; }
+        .problem { background-color: #fce8e6 !important; border-left: 4px solid var(--danger); }
+        .problem-text { color: var(--danger); font-weight: bold; font-size: 12px; }
+        
+        .action-btns { display: flex; gap: 10px; align-items: center; }
+        .sum-display { font-weight: bold; color: var(--danger); text-align: right; padding: 10px; }
+        
+        .tag { font-size: 10px; padding: 2px 5px; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
+        .tag-soon { background: #feefc3; color: #b05a00; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h1>Maksusuunnitelma Maaliskuu 2026</h1>
-        <p><i>Käytä kahden puhelimen taktiikkaa tai syötä käsin alta.</i></p>
+        <h1>Laskujen Hallinta & Budjetti</h1>
+        <div class="budget-info">
+            <div class="budget-box">Huhtikuun budjetti: <div class="budget-val">970,00 €</div></div>
+            <div class="budget-box">Toukokuun budjetti: <div class="budget-val">1400,00 €</div></div>
+        </div>
         
-        <button class="btn btn-scan" onclick="document.getElementById('camera-input').click()">📷 Lue lasku kameralla</button>
-        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="processImage(event)">
-
         <div class="input-row">
-            <input type="text" id="provider" placeholder="Laskuttaja (esim. Vuokra)">
+            <input type="text" id="provider" placeholder="Laskuttaja">
             <input type="date" id="dueDate">
             <input type="number" id="amount" step="0.01" placeholder="Summa €">
-            <button class="btn btn-primary" onclick="addBill()">Lisää listaan</button>
+            <button class="btn-add" onclick="addBill()">Lisää</button>
         </div>
-        <div id="status" style="font-size: 12px; color: #666;"></div>
     </div>
 
     <div class="card">
-        <div class="summary-box">Maksamatta maaliskuun loppuun: <span id="totalSum">0.00</span> €</div>
+        <h2>🗓️ Seuraavat 2 viikkoa (Lähitulevaisuus)</h2>
+        <table id="tableSoon">
+            <tbody id="bodySoon"></tbody>
+        </table>
+        <div class="sum-display">Yhteensä: <span id="totalSoon">0.00</span> €</div>
     </div>
 
-    <div class="tables-grid">
-        <div class="card">
-            <h2>📅 Eräpäivän mukaan</h2>
-            <table>
-                <thead>
-                    <tr><th>Pvm</th><th>Kohde</th><th>€</th></tr>
-                </thead>
-                <tbody id="dateBody"></tbody>
-            </table>
-        </div>
-
-        <div class="card">
-            <h2>🔤 Aakkosjärjestyksessä</h2>
-            <table>
-                <thead>
-                    <tr><th>Kohde</th><th>Pvm</th><th>€</th></tr>
-                </thead>
-                <tbody id="alphaBody"></tbody>
-            </table>
-        </div>
+    <div class="card">
+        <h2>📅 Myöhemmät (2-4 viikon päästä)</h2>
+        <table id="tableLater">
+            <tbody id="bodyLater"></tbody>
+        </table>
+        <div class="sum-display">Yhteensä: <span id="totalLater">0.00</span> €</div>
     </div>
+
+    <p style="font-size: 11px; color: #666; text-align: center;">Vinkki: Ruxaa lasku maksetuksi tai merkitse 'ongelmaksi' jos rahat eivät riitä.</p>
 </div>
 
 <script>
     let bills = JSON.parse(localStorage.getItem('bills')) || [];
-
-    async function processImage(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        document.getElementById('status').innerText = "Tunnistetaan...";
-        try {
-            const result = await Tesseract.recognize(file, 'fin');
-            const text = result.data.text;
-            const amountMatch = text.match(/\d+[,.]\d{2}/);
-            if (amountMatch) document.getElementById('amount').value = amountMatch[0].replace(',', '.');
-            const lines = text.split('\n').filter(l => l.trim().length > 2);
-            if (lines.length > 0) document.getElementById('provider').value = lines[0].trim();
-            document.getElementById('status').innerText = "Tunnistettu. Tarkista pvm!";
-        } catch (e) { document.getElementById('status').innerText = "Virhe."; }
-    }
 
     function addBill() {
         const provider = document.getElementById('provider').value;
         const dueDate = document.getElementById('dueDate').value;
         const amount = parseFloat(document.getElementById('amount').value);
         if (provider && dueDate && !isNaN(amount)) {
-            bills.push({ provider, dueDate, amount, id: Date.now() });
+            bills.push({ provider, dueDate, amount, paid: false, problem: false, id: Date.now() });
             save();
         }
     }
 
-    function deleteBill(id) {
-        bills = bills.filter(b => b.id !== id);
+    function toggleStatus(id, field) {
+        const bill = bills.find(b => b.id === id);
+        if (bill) bill[field] = !bill[field];
         save();
+    }
+
+    function deleteBill(id) {
+        if(confirm("Poistetaanko lasku?")) {
+            bills = bills.filter(b => b.id !== id);
+            save();
+        }
     }
 
     function save() {
@@ -115,30 +106,55 @@
     }
 
     function render() {
-        const dateBody = document.getElementById('dateBody');
-        const alphaBody = document.getElementById('alphaBody');
-        dateBody.innerHTML = '';
-        alphaBody.innerHTML = '';
-        
-        let total = 0;
-        const endOfMarch = new Date(2026, 2, 31);
+        const bodySoon = document.getElementById('bodySoon');
+        const bodyLater = document.getElementById('bodyLater');
+        bodySoon.innerHTML = '';
+        bodyLater.innerHTML = '';
 
-        // Päivämääräjärjestys
-        const dateSorted = [...bills].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-        dateSorted.forEach(b => {
-            const d = new Date(b.dueDate);
-            if (d <= endOfMarch) total += b.amount;
-            dateBody.innerHTML += `<tr><td>${d.toLocaleDateString('fi-FI')}</td><td>${b.provider}</td><td>${b.amount.toFixed(2)} € <button onclick="deleteBill(${b.id})" style="border:none;background:none;cursor:pointer">✕</button></td></tr>`;
+        const now = new Date(); now.setHours(0,0,0,0);
+        const twoWeeks = new Date(now); twoWeeks.setDate(now.getDate() + 14);
+        const fourWeeks = new Date(now); fourWeeks.setDate(now.getDate() + 28);
+
+        let sumSoon = 0;
+        let sumLater = 0;
+
+        bills.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+        bills.forEach(bill => {
+            const d = new Date(bill.dueDate);
+            const rowClass = (bill.paid ? 'paid' : '') + (bill.problem ? ' problem' : '');
+            
+            const html = `
+                <tr class="${rowClass}">
+                    <td>
+                        <input type="checkbox" ${bill.paid ? 'checked' : ''} onchange="toggleStatus(${bill.id}, 'paid')">
+                    </td>
+                    <td>
+                        <strong>${bill.provider}</strong><br>
+                        <small>${d.toLocaleDateString('fi-FI')}</small>
+                        ${bill.problem ? '<br><span class="problem-text">⚠️ ONGELMA</span>' : ''}
+                    </td>
+                    <td style="text-align:right">
+                        <strong>${bill.amount.toFixed(2)} €</strong>
+                    </td>
+                    <td class="action-btns">
+                        <button onclick="toggleStatus(${bill.id}, 'problem')" title="Merkitse ongelmaksi" style="background:none; border:1px solid #ccc;">🚩</button>
+                        <button onclick="deleteBill(${bill.id})" style="background:none; border:none;">✕</button>
+                    </td>
+                </tr>
+            `;
+
+            if (d <= twoWeeks) {
+                bodySoon.innerHTML += html;
+                if (!bill.paid) sumSoon += bill.amount;
+            } else if (d <= fourWeeks) {
+                bodyLater.innerHTML += html;
+                if (!bill.paid) sumLater += bill.amount;
+            }
         });
 
-        // Aakkosjärjestys
-        const alphaSorted = [...bills].sort((a, b) => a.provider.localeCompare(b.provider));
-        alphaSorted.forEach(b => {
-            const d = new Date(b.dueDate);
-            alphaBody.innerHTML += `<tr><td>${b.provider}</td><td>${d.toLocaleDateString('fi-FI')}</td><td>${b.amount.toFixed(2)} €</td></tr>`;
-        });
-
-        document.getElementById('totalSum').innerText = total.toFixed(2);
+        document.getElementById('totalSoon').innerText = sumSoon.toFixed(2);
+        document.getElementById('totalLater').innerText = sumLater.toFixed(2);
     }
 
     render();
