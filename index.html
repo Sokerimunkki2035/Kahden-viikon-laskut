@@ -3,150 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kahden viikon kirjanpito</title>
+    <title>Kirjanpito - Kaikki laskut</title>
     <style>
-        :root { --danger: #d93025; --success: #188038; --google-blue: #1a73e8; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; background: #f8f9fa; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); margin-bottom: 15px; }
-        h1 { font-size: 1.2rem; color: var(--google-blue); text-align: center; }
-        h2 { font-size: 1rem; border-bottom: 2px solid #eee; padding-bottom: 5px; color: #5f6368; }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 10px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        h1 { color: #1a73e8; text-align: center; font-size: 1.2rem; }
         
-        .input-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; margin-bottom: 10px; }
-        input, button { padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px; }
-        .btn-add { background: var(--google-blue); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .lasku-rivi { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 10px 0; 
+            border-bottom: 1px solid #eee;
+        }
+        .lasku-info { flex-grow: 1; }
+        .lasku-nimi { font-weight: bold; font-size: 1.1rem; display: block; }
         
-        table { width: 100%; border-collapse: collapse; }
-        td { padding: 12px 5px; border-bottom: 1px solid #eee; }
+        input[type="date"] { border: 1px solid #1a73e8; padding: 5px; border-radius: 4px; margin-top: 5px; }
+        input[type="checkbox"] { transform: scale(1.5); margin-right: 15px; }
         
-        /* Tyylit tilan mukaan */
-        .paid { background-color: #f1f8f3; opacity: 0.7; }
-        .problem { border-left: 5px solid var(--danger); background-color: #fce8e6; }
-        .expired { color: #d93025; font-weight: bold; } /* Mennyt päiväys loistaa punaisena */
-
-        .edit-date { border: 1px solid var(--google-blue); padding: 4px; border-radius: 4px; font-size: 12px; width: 110px; }
-        .sum-display { text-align: right; font-weight: bold; font-size: 1.1rem; color: var(--danger); padding: 10px 0; }
-        .btn-icon { background: none; border: 1px solid #ddd; padding: 5px; cursor: pointer; border-radius: 4px; }
+        .summa { font-weight: bold; font-size: 1.1rem; margin: 0 10px; min-width: 80px; text-align: right; }
+        .nappi-poista { background: none; border: 1px solid #ccc; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        
+        .total-box { margin-top: 20px; padding: 15px; background: #fff1f0; border: 1px solid #ffa39e; border-radius: 8px; text-align: right; }
+        .total-summa { font-size: 1.4rem; color: #d93025; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="card">
-        <h1>Kahden viikon kirjanpito</h1>
-        <div class="input-row">
-            <input type="text" id="provider" placeholder="Laskuttaja">
-            <input type="date" id="dueDate">
-            <input type="number" id="amount" step="0.01" placeholder="Summa €">
-            <button class="btn-add" onclick="addBill()">LISÄÄ</button>
-        </div>
-    </div>
+    <h1>Kaikki tallennetut laskut</h1>
+    <p style="font-size: 0.9rem; color: #666;">Päivitä huhtikuun päivämäärät suoraan listaan.</p>
 
-    <div class="card">
-        <h2>📍 Seuraavat 14 päivää (tai erääntyneet)</h2>
-        <table>
-            <tbody id="bodySoon"></tbody>
-        </table>
-        <div class="sum-display">Maksamatta: <span id="totalSoon">0.00</span> €</div>
-    </div>
+    <div id="lista"></div>
 
-    <div class="card">
-        <h2>📅 Myöhemmät laskut</h2>
-        <table>
-            <tbody id="bodyLater"></tbody>
-        </table>
-        <div class="sum-display">Maksamatta: <span id="totalLater">0.00</span> €</div>
+    <div class="total-box">
+        Maksamatta huhtikuussa: <span class="total-summa" id="yhteensa">0.00</span> €
     </div>
 </div>
 
 <script>
-    let bills = JSON.parse(localStorage.getItem('bills')) || [];
+    let laskut = JSON.parse(localStorage.getItem('bills')) || [];
 
-    function addBill() {
-        const provider = document.getElementById('provider').value;
-        const dueDate = document.getElementById('dueDate').value;
-        const amount = parseFloat(document.getElementById('amount').value);
-        if (provider && dueDate && !isNaN(amount)) {
-            bills.push({ provider, dueDate, amount, paid: false, problem: false, id: Date.now() });
-            save();
+    function tallennaJaNayta() {
+        localStorage.setItem('bills', JSON.stringify(laskut));
+        paivitaNakyma();
+    }
+
+    function muutaPaiva(id, uusiPaiva) {
+        const lasku = laskut.find(l => l.id === id);
+        if (lasku) {
+            lasku.dueDate = uusiPaiva;
+            lasku.paid = false; // Kun muutat päivän huhtikuulle, ruksi poistuu automaattisesti
+            tallennaJaNayta();
         }
     }
 
-    // TÄMÄ PÄIVITTÄÄ PÄIVÄMÄÄRÄN SUORAAN LISTASTA
-    function updateDate(id, newDate) {
-        const bill = bills.find(b => b.id === id);
-        if (bill && newDate) {
-            bill.dueDate = newDate;
-            bill.paid = false; // Nollataan maksettu-tila, kun päivä vaihtuu tulevaisuuteen
-            save();
+    function muutaStatus(id) {
+        const lasku = laskut.find(l => l.id === id);
+        if (lasku) {
+            lasku.paid = !lasku.paid;
+            tallennaJaNayta();
         }
     }
 
-    function toggle(id, key) {
-        const bill = bills.find(b => b.id === id);
-        if (bill) bill[key] = !bill[key];
-        save();
-    }
-
-    function deleteBill(id) {
-        if(confirm("Poistetaanko lasku kokonaan?")) {
-            bills = bills.filter(b => b.id !== id);
-            save();
+    function poistaLasku(id) {
+        if(confirm("Poistetaanko lasku listalta?")) {
+            laskut = laskut.filter(l => l.id !== id);
+            tallennaJaNayta();
         }
     }
 
-    function save() {
-        localStorage.setItem('bills', JSON.stringify(bills));
-        render();
-    }
+    function paivitaNakyma() {
+        const listaElementti = document.getElementById('lista');
+        listaElementti.innerHTML = '';
+        let summa = 0;
 
-    function render() {
-        const bodySoon = document.getElementById('bodySoon');
-        const bodyLater = document.getElementById('bodyLater');
-        bodySoon.innerHTML = ''; bodyLater.innerHTML = '';
+        // Järjestetään päivän mukaan (vanhimmat eli tammikuu ensin)
+        laskut.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
-        const now = new Date(); now.setHours(0,0,0,0);
-        const twoWeeks = new Date(now); twoWeeks.setDate(now.getDate() + 14);
+        laskut.forEach(l => {
+            const rivi = document.createElement('div');
+            rivi.className = 'lasku-rivi';
+            if (l.paid) rivi.style.opacity = '0.5';
 
-        let sSoon = 0, sLater = 0;
-
-        // Järjestetään päivämäärän mukaan
-        bills.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-
-        bills.forEach(bill => {
-            const d = new Date(bill.dueDate);
-            const isExpired = d < now;
-            const rowClass = (bill.paid ? 'paid' : '') + (bill.problem ? ' problem' : '');
-            
-            const html = `
-                <tr class="${rowClass}">
-                    <td><input type="checkbox" ${bill.paid ? 'checked' : ''} onchange="toggle(${bill.id}, 'paid')"></td>
-                    <td>
-                        <strong style="${isExpired && !bill.paid ? 'color:red' : ''}">${bill.provider}</strong><br>
-                        <input type="date" class="edit-date" value="${bill.dueDate}" onchange="updateDate(${bill.id}, this.value)">
-                    </td>
-                    <td style="text-align:right"><strong>${bill.amount.toFixed(2)} €</strong></td>
-                    <td style="text-align:right">
-                        <button class="btn-icon" onclick="toggle(${bill.id}, 'problem')">🚩</button>
-                        <button class="btn-icon" onclick="deleteBill(${bill.id})">✕</button>
-                    </td>
-                </tr>
+            rivi.innerHTML = `
+                <input type="checkbox" ${l.paid ? 'checked' : ''} onclick="muutaStatus(${l.id})">
+                <div class="lasku-info">
+                    <span class="lasku-nimi">${l.provider}</span>
+                    <input type="date" value="${l.dueDate}" onchange="muutaPaiva(${l.id}, this.value)">
+                </div>
+                <div class="summa">${l.amount.toFixed(2)} €</div>
+                <button class="nappi-poista" onclick="poistaLasku(${l.id})">✕</button>
             `;
+            listaElementti.appendChild(rivi);
 
-            if (d <= twoWeeks) {
-                bodySoon.innerHTML += html;
-                if (!bill.paid) sSoon += bill.amount;
-            } else {
-                bodyLater.innerHTML += html;
-                if (!bill.paid) sLater += bill.amount;
-            }
+            if (!l.paid) summa += l.amount;
         });
 
-        document.getElementById('totalSoon').innerText = sSoon.toFixed(2);
-        document.getElementById('totalLater').innerText = sLater.toFixed(2);
+        document.getElementById('yhteensa').innerText = summa.toFixed(2);
     }
 
-    render();
+    paivitaNakyma();
 </script>
 </body>
 </html>
